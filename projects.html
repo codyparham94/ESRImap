@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapping Projects by Cody Parham</title>
+    <meta name="description" content="Interactive web maps by Cody Parham.">
+    <meta name="theme-color" content="#0B0C0A">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%238BD04A'/%3E%3Ctext x='16' y='21' font-family='Arial' font-weight='800' font-size='13' text-anchor='middle' fill='%230B0C0A'%3ECP%3C/text%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="assets/site.css">
+    <style>
+        /* Map viewer card */
+        .viewer {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+        }
+        .viewer iframe {
+            flex: 1;
+            display: block;
+            width: 100%;
+            min-height: 0;
+            border: 0;
+            background: var(--card-raised);
+        }
+        @media (max-width: 760px) {
+            .viewer .card-head p {
+                display: none;
+            }
+            .viewer .button {
+                padding: 0;
+            }
+            .viewer .button .label-long {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <div class="main">
+            <header class="topbar">
+                <ol class="crumbs" aria-label="Breadcrumb">
+                    <li>Projects</li>
+                    <li id="crumbCurrent" aria-current="page"></li>
+                </ol>
+            </header>
+
+            <main class="content">
+                <div class="page-head">
+                    <h1>Mapping Projects by Cody Parham</h1>
+                    <p>Pick a project to open its map.</p>
+                </div>
+
+                <section class="card viewer" aria-labelledby="viewerTitle">
+                    <div class="card-head">
+                        <div>
+                            <h2 id="viewerTitle"></h2>
+                            <p id="viewerMeta"></p>
+                        </div>
+                        <a id="viewerOpen" class="button" target="_blank" rel="noopener">
+                            <span class="label-long">Open full page</span>
+                            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>
+                        </a>
+                    </div>
+                    <iframe id="viewerFrame" allowfullscreen></iframe>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script src="assets/site.js"></script>
+    <script>
+        // The URL hash picks the project (#/<id>); with no hash, the first live one opens.
+        const sidebar = document.getElementById("sidebar");
+        Site.renderSidebar(sidebar, { page: "projects" });
+
+        const live = Site.projects.filter(function (project) {
+            return project.src;
+        });
+        const links = Array.from(sidebar.querySelectorAll(".project-link"));
+        const frame = document.getElementById("viewerFrame");
+        const title = document.getElementById("viewerTitle");
+        const meta = document.getElementById("viewerMeta");
+        const crumb = document.getElementById("crumbCurrent");
+        const openLink = document.getElementById("viewerOpen");
+
+        const showProject = function () {
+            let project = live.find(function (candidate) {
+                return "#/" + candidate.id === location.hash;
+            });
+            if (!project) {
+                project = live[0];
+                history.replaceState(null, "", "#/" + project.id);
+            }
+
+            links.forEach(function (link) {
+                if (link.getAttribute("href") === "#/" + project.id) {
+                    link.setAttribute("aria-current", "page");
+                } else {
+                    link.removeAttribute("aria-current");
+                }
+            });
+
+            if (frame.getAttribute("src") !== project.src) {
+                frame.setAttribute("src", project.src);
+            }
+            frame.title = project.title;
+            title.textContent = project.title;
+            meta.textContent = project.meta;
+            crumb.textContent = project.name;
+            openLink.href = project.src;
+            openLink.setAttribute("aria-label", "Open " + project.title + " in a new tab");
+            document.title = project.title + " · Cody Parham";
+        };
+
+        window.addEventListener("hashchange", showProject);
+        showProject();
+    </script>
+</body>
+</html>

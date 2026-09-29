@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Montgomery County Roadways</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.34/esri/themes/light/main.css">
+    <script>
+        // Inside the codyparham.com shell, the shell shows the title bar.
+        if (window.self !== window.top) {
+            document.documentElement.classList.add("embedded");
+        }
+    </script>
+    <style>
+        html, body {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+        }
+        header {
+            padding: 10px 16px;
+            background: #2c3e50;
+            color: #fff;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+            z-index: 2;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        .embedded header {
+            display: none;
+        }
+        #viewDiv {
+            flex: 1;
+            position: relative;
+        }
+        #status {
+            position: absolute;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 8px 14px;
+            background: #fff;
+            color: #2c3e50;
+            border-radius: 4px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+            font-size: 0.95rem;
+            z-index: 3;
+            max-width: calc(100vw - 32px);
+            box-sizing: border-box;
+        }
+        #status.error {
+            color: #c0392b;
+        }
+        #status[hidden] {
+            display: none;
+        }
+
+        /* Expandable cards (directions, layers) */
+        .map-card {
+            min-width: 200px;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            background: #fff;
+        }
+        .map-card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 10px 14px;
+            border: 0;
+            background: #2c3e50;
+            color: #fff;
+            font: inherit;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-align: left;
+            cursor: pointer;
+        }
+        .map-card-header:hover {
+            background: #34495e;
+        }
+        .map-card-header:focus-visible {
+            outline: 3px solid #5dade2;
+            outline-offset: -3px;
+        }
+        .map-card-header svg {
+            flex: none;
+            width: 20px;
+            height: 20px;
+        }
+        .map-card-header span {
+            flex: 1;
+        }
+        .map-card-header .chevron {
+            width: 16px;
+            height: 16px;
+            transition: transform 0.15s ease;
+        }
+        .map-card-header[aria-expanded="true"] .chevron {
+            transform: rotate(180deg);
+        }
+        .map-card-body {
+            padding: 12px;
+            max-height: calc(100vh - 190px);
+            overflow-y: auto;
+            box-sizing: border-box;
+        }
+        .map-card-body[hidden] {
+            display: none;
+        }
+        .map-card.open {
+            width: min(300px, calc(100vw - 80px));
+        }
+        #layersPanel {
+            padding: 0;
+        }
+        #layersPanel .esri-layer-list {
+            width: auto;
+        }
+        .field {
+            margin-bottom: 10px;
+        }
+        .field label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .field-row {
+            display: flex;
+            gap: 4px;
+        }
+        .field-row input {
+            flex: 1;
+            min-width: 0;
+            padding: 6px 8px;
+            border: 1px solid #b0b8c0;
+            border-radius: 3px;
+            font: inherit;
+            font-size: 0.9rem;
+        }
+        .field-row input.picking {
+            border-color: #2980b9;
+            box-shadow: 0 0 0 2px rgba(41, 128, 185, 0.3);
+        }
+        .pick-button {
+            flex: none;
+            width: 32px;
+            border: 1px solid #b0b8c0;
+            border-radius: 3px;
+            background: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+        .pick-button.active {
+            background: #2980b9;
+            border-color: #2980b9;
+            color: #fff;
+        }
+        .pick-button svg {
+            width: 16px;
+            height: 16px;
+        }
+        .hint {
+            margin: 0 0 10px;
+            font-size: 0.8rem;
+            color: #5d6d7e;
+        }
+        .mode {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+        }
+        .actions {
+            display: flex;
+            gap: 6px;
+        }
+        .actions button {
+            padding: 7px 10px;
+            border-radius: 3px;
+            font: inherit;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        #calculateRoute {
+            flex: 1;
+            background: #2980b9;
+            border: 1px solid #2980b9;
+            color: #fff;
+            font-weight: 600;
+        }
+        #calculateRoute:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+        #clearRoute {
+            background: #fff;
+            border: 1px solid #b0b8c0;
+            color: #2c3e50;
+        }
+        #routeResult {
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+        #routeResult.error {
+            color: #c0392b;
+        }
+        #routeResult:empty {
+            display: none;
+        }
+    </style>
+    <script src="https://js.arcgis.com/4.34/"></script>
+</head>
+<body>
+    <header>
+        <h1>Interactive Montgomery County Roadways</h1>
+    </header>
+    <div id="viewDiv"></div>
+    <div id="status">Loading layers…</div>
+
+    <section id="directionsCard" class="map-card esri-widget">
+        <button id="directionsToggle" class="map-card-header" type="button" aria-expanded="false" aria-controls="directionsPanel">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
+            </svg>
+            <span>GET DIRECTIONS</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
+        </button>
+
+        <div id="directionsPanel" class="map-card-body" hidden>
+            <div class="field">
+                <label for="startInput">Starting Point</label>
+                <div class="field-row">
+                    <input id="startInput" type="text" placeholder="Address, or click the map" autocomplete="off">
+                    <button class="pick-button" type="button" data-target="start" title="Pick starting point on map" aria-label="Pick starting point on map">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="field">
+                <label for="endInput">Destination</label>
+                <div class="field-row">
+                    <input id="endInput" type="text" placeholder="Address, or click the map" autocomplete="off">
+                    <button class="pick-button" type="button" data-target="end" title="Pick destination on map" aria-label="Pick destination on map">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <p class="hint">Click a box (or its pin), then click the map to set that point.</p>
+            <div class="mode" role="radiogroup" aria-label="Route type">
+                <label><input type="radio" name="routeMode" value="distance" checked> Shortest distance</label>
+                <label><input type="radio" name="routeMode" value="time"> Fastest</label>
+            </div>
+            <div class="actions">
+                <button id="calculateRoute" type="button">Calculate Route</button>
+                <button id="clearRoute" type="button">Clear</button>
+            </div>
+            <div id="routeResult" aria-live="polite"></div>
+        </div>
+    </section>
+
+    <section id="layersCard" class="map-card esri-widget">
+        <button id="layersToggle" class="map-card-header" type="button" aria-expanded="false" aria-controls="layersPanel">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="m11.99 18.54-7.37-5.73L3 14.07l9 7 9-7-1.63-1.27zM12 16l7.36-5.73L21 9l-9-7-9 7 1.63 1.27z"/>
+            </svg>
+            <span>LAYERS</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
+        </button>
+        <div id="layersPanel" class="map-card-body" hidden>
+            <div id="layerListDiv"></div>
+        </div>
+    </section>
+
+    <script>
+        // Public, browser-safe keys. Restrict the ArcGIS key to https://codyparham.com
+        // in your ArcGIS developer dashboard. The Supabase publishable key is read-only via RLS.
+        const ARCGIS_API_KEY = "AAPTajg4rGSoatdba_BbpfNHMXA..fu-MxrsEJaFLLHEeInEt_e7DRimxKj6DqViJi8CtQZkgBqvM-8ZCvzAdh8l63w5OcFTs-ndANq6Ad7jRBJOJOSmz8yzBQTE2KUOoakLIf1EhiNF1kmBgAOBhkhieDUv9xZXpm96zH4Q3oGXBnWmVJFnPnbL7Wx60KyYDz-NtQrisSam08-DZbRF7LQ9EPweIgM_fmYhs8riPkd-coie_pqEZf34dt457YN9uQ0WpWgAwAKVPV9Bn1JLXEcTL1Jk.AT1_8aYyB132";
+        const SUPABASE_URL = "https://lzyppxkivzwdtsxdquso.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_9881RD-FP11p3UssyK3UFQ_1GrN0j3E";
+        const GEOCODE_URL = "https://geocode-api.arcgis.com/arcgis/rest/services/World/GeocodeServer";
+
+        // Clarksville, TN
+        const CENTER = [-87.28563952777512, 36.5171336999705];
+
+        require([
+            "esri/config",
+            "esri/Map",
+            "esri/views/MapView",
+            "esri/Graphic",
+            "esri/layers/GeoJSONLayer",
+            "esri/layers/GraphicsLayer",
+            "esri/geometry/Point",
+            "esri/geometry/Extent",
+            "esri/rest/locator",
+            "esri/widgets/Home",
+            "esri/widgets/BasemapToggle",
+            "esri/widgets/LayerList"
+        ], function (esriConfig, Map, MapView, Graphic, GeoJSONLayer, GraphicsLayer, Point, Extent,
+                     locator, Home, BasemapToggle, LayerList) {
+            esriConfig.apiKey = ARCGIS_API_KEY;
+
+            const status = document.getElementById("status");
+            const showStatus = function (message, isError) {
+                status.textContent = message;
+                status.className = isError ? "error" : "";
+                status.hidden = false;
+            };
+
+            const callRpc = function (name, params) {
+                return fetch(SUPABASE_URL + "/rest/v1/rpc/" + name, {
+                    method: "POST",
+                    headers: {
+                        "apikey": SUPABASE_KEY,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(params || {})
+                }).then(function (response) {
+                    return response.json().then(function (body) {
+                        if (!response.ok) {
+                            throw new Error((body && body.message) || ("Supabase returned " + response.status));
+                        }
+                        return body;
+                    });
+                });
+            };
+
+            const toLayerUrl = function (geojson) {
+                const blob = new Blob([JSON.stringify(geojson)], { type: "application/json" });
+                return URL.createObjectURL(blob);
+            };
+
+            const map = new Map({ basemap: "arcgis/topographic" });
+
+            const view = new MapView({
+                container: "viewDiv",
+                map: map,
+                center: CENTER,
+                zoom: 12
+            });
+
+            view.ui.add(new Home({ view: view }), "top-left");
+            view.ui.add(new BasemapToggle({ view: view, nextBasemap: "arcgis/imagery" }), "bottom-right");
+            new LayerList({
+                view: view,
+                container: "layerListDiv",
+                listItemCreatedFunction: function (event) {
+                    if (event.item.layer.type !== "graphics") {
+                        event.item.panel = { content: "legend", open: false };
+                    }
+                }
+            });
+
+            // Expandable cards. On narrow screens only one is open at a time.
+            const cards = [];
+            const setCardOpen = function (card, open) {
+                card.body.hidden = !open;
+                card.header.setAttribute("aria-expanded", String(open));
+                card.element.classList.toggle("open", open);
+                if (card.onToggle) {
+                    card.onToggle(open);
+                }
+            };
+            const addCard = function (elementId, position, onToggle) {
+                const element = document.getElementById(elementId);
+                const card = {
+                    element: element,
+                    header: element.querySelector(".map-card-header"),
+                    body: element.querySelector(".map-card-body"),
+                    onToggle: onToggle
+                };
+                card.header.addEventListener("click", function () {
+                    const opening = card.body.hidden;
+                    if (opening && window.matchMedia("(max-width: 640px)").matches) {
+                        cards.forEach(function (other) {
+                            if (other !== card && !other.body.hidden) {
+                                setCardOpen(other, false);
+                            }
+                        });
+                    }
+                    setCardOpen(card, opening);
+                });
+                cards.push(card);
+                view.ui.add(element, position);
+                return card;
+            };
+
+            addCard("layersCard", "top-right");
+
+            // ---------------------------------------------------------------
+            // Layers (drawn bottom to top)
+            // ---------------------------------------------------------------
+
+            const layerDefs = [
+                {
+                    rpc: "get_school_properties",
+                    options: {
+                        title: "School Property",
+                        renderer: {
+                            type: "simple",
+                            symbol: {
+                                type: "simple-fill",
+                                color: [142, 68, 173, 0.25],
+                                outline: { color: [142, 68, 173, 1], width: 1 }
+                            }
+                        },
+                        popupTemplate: {
+                            title: "{School}",
+                            content: [{
+                                type: "fields",
+                                fieldInfos: [
+                                    { fieldName: "District", label: "District" },
+                                    { fieldName: "School_Type", label: "Type" },
+                                    { fieldName: "Grade_Levels", label: "Grades" },
+                                    { fieldName: "Address", label: "Address" },
+                                    { fieldName: "City", label: "City" },
+                                    { fieldName: "Phone1", label: "Phone" }
+                                ]
+                            }]
+                        }
+                    }
+                },
+                {
+                    rpc: "get_recreation_areas",
+                    options: {
+                        title: "Recreation Areas",
+                        renderer: {
+                            type: "simple",
+                            symbol: {
+                                type: "simple-fill",
+                                color: [39, 174, 96, 0.3],
+                                outline: { color: [30, 132, 73, 1], width: 1 }
+                            }
+                        },
+                        popupTemplate: {
+                            title: "{Name}",
+                            content: [{
+                                type: "fields",
+                                fieldInfos: [
+                                    { fieldName: "Managing_Entity_Name", label: "Managed by" },
+                                    { fieldName: "Street_Name", label: "Street" },
+                                    { fieldName: "City", label: "City" },
+                                    { fieldName: "Total_Acreage", label: "Acres" },
+                                    { fieldName: "Condition_of_Park", label: "Condition" },
+                                    { fieldName: "Website", label: "Website" }
+                                ]
+                            }]
+                        }
+                    }
+                },
+                {
+                    rpc: "get_roads",
+                    options: {
+                        title: "Roads",
+                        renderer: {
+                            type: "unique-value",
+                            field: "road_class",
+                            defaultSymbol: { type: "simple-line", color: [127, 140, 141, 1], width: 1 },
+                            uniqueValueInfos: [
+                                { value: "Interstate", label: "Interstate", symbol: { type: "simple-line", color: [192, 57, 43, 1], width: 3.5 } },
+                                { value: "Ramp", label: "Interstate ramp", symbol: { type: "simple-line", color: [192, 57, 43, 1], width: 2 } },
+                                { value: "State Route", label: "State Route", symbol: { type: "simple-line", color: [230, 126, 34, 1], width: 2.5 } },
+                                { value: "Local", label: "Local road", symbol: { type: "simple-line", color: [93, 109, 126, 1], width: 1.25 } }
+                            ]
+                        },
+                        popupTemplate: {
+                            title: "Route {route}",
+                            content: [{
+                                type: "fields",
+                                fieldInfos: [
+                                    { fieldName: "road_class", label: "Class" },
+                                    { fieldName: "width_ft", label: "Pavement width (ft)" },
+                                    { fieldName: "begin_mile", label: "Begin log mile" },
+                                    { fieldName: "end_mile", label: "End log mile" },
+                                    { fieldName: "length_mi", label: "Length (mi)" }
+                                ]
+                            }]
+                        }
+                    }
+                },
+                {
+                    rpc: "get_marina_sites",
+                    options: {
+                        title: "Marina Sites",
+                        renderer: {
+                            type: "simple",
+                            symbol: {
+                                type: "simple-marker",
+                                style: "circle",
+                                size: 12,
+                                color: [41, 128, 185, 1],
+                                outline: { color: [255, 255, 255, 1], width: 2 }
+                            }
+                        },
+                        popupTemplate: {
+                            title: "{Name}",
+                            content: [{
+                                type: "fields",
+                                fieldInfos: [
+                                    { fieldName: "Waterway", label: "Waterway" },
+                                    { fieldName: "Type", label: "Type" },
+                                    { fieldName: "Owner", label: "Owner" },
+                                    { fieldName: "Comments", label: "Comments" }
+                                ]
+                            }]
+                        }
+                    }
+                }
+            ];
+
+            const loads = layerDefs.map(function (def) {
+                return callRpc(def.rpc).then(function (geojson) {
+                    if (!geojson.features || geojson.features.length === 0) {
+                        throw new Error(def.options.title + " has no data yet");
+                    }
+                    return new GeoJSONLayer(Object.assign({ url: toLayerUrl(geojson) }, def.options));
+                });
+            });
+
+            Promise.allSettled(loads).then(function (results) {
+                const failed = [];
+                results.forEach(function (result, i) {
+                    if (result.status === "fulfilled") {
+                        map.add(result.value);
+                    } else {
+                        console.error(result.reason);
+                        failed.push(layerDefs[i].options.title);
+                    }
+                });
+                map.reorder(routeLayer, map.layers.length - 1);
+
+                if (failed.length) {
+                    showStatus("Could not load: " + failed.join(", ") + ".", true);
+                } else {
+                    status.hidden = true;
+                }
+            });
+
+            // ---------------------------------------------------------------
+            // Driving directions
+            // ---------------------------------------------------------------
+
+            const routeLayer = new GraphicsLayer({ title: "Route", listMode: "hide" });
+            map.add(routeLayer);
+
+            const panel = document.getElementById("directionsPanel");
+            const calculateButton = document.getElementById("calculateRoute");
+            const clearButton = document.getElementById("clearRoute");
+            const result = document.getElementById("routeResult");
+
+
+            // Each stop keeps the text shown in its box and, once known, its map point.
+            const stops = {
+                start: { input: document.getElementById("startInput"), label: "A", color: [39, 174, 96, 1], point: null, text: "" },
+                end: { input: document.getElementById("endInput"), label: "B", color: [192, 57, 43, 1], point: null, text: "" }
+            };
+            let pickTarget = null;
+
+            const setPickTarget = function (target) {
+                pickTarget = target;
+                Object.keys(stops).forEach(function (key) {
+                    stops[key].input.classList.toggle("picking", key === target);
+                });
+                document.querySelectorAll(".pick-button").forEach(function (button) {
+                    button.classList.toggle("active", button.dataset.target === target);
+                });
+                view.popupEnabled = !target;
+                view.container.style.cursor = target ? "crosshair" : "";
+            };
+
+            const showResult = function (message, isError) {
+                result.textContent = message;
+                result.className = isError ? "error" : "";
+            };
+
+            const drawRoute = function (routeGeometry) {
+                routeLayer.removeAll();
+                if (routeGeometry) {
+                    routeLayer.add(new Graphic({
+                        geometry: routeGeometry,
+                        symbol: { type: "simple-line", color: [255, 255, 255, 0.9], width: 8, cap: "round", join: "round" }
+                    }));
+                    routeLayer.add(new Graphic({
+                        geometry: routeGeometry,
+                        symbol: { type: "simple-line", color: [41, 128, 185, 1], width: 5, cap: "round", join: "round" }
+                    }));
+                }
+                Object.keys(stops).forEach(function (key) {
+                    const stop = stops[key];
+                    if (!stop.point) {
+                        return;
+                    }
+                    routeLayer.add(new Graphic({
+                        geometry: stop.point,
+                        symbol: {
+                            type: "simple-marker",
+                            size: 18,
+                            color: stop.color,
+                            outline: { color: [255, 255, 255, 1], width: 2 }
+                        }
+                    }));
+                    routeLayer.add(new Graphic({
+                        geometry: stop.point,
+                        symbol: {
+                            type: "text",
+                            text: stop.label,
+                            color: "white",
+                            yoffset: -4,
+                            font: { size: 10, weight: "bold" }
+                        }
+                    }));
+                });
+            };
+
+            const formatCoords = function (point) {
+                return point.latitude.toFixed(5) + ", " + point.longitude.toFixed(5);
+            };
+
+            const setStop = function (key, point, text) {
+                const stop = stops[key];
+                stop.point = point;
+                stop.text = text;
+                stop.input.value = text;
+                drawRoute(null);
+            };
+
+            // Added after the layers card, so it sits underneath it.
+            addCard("directionsCard", "top-right", function (open) {
+                if (open) {
+                    const empty = !stops.start.point ? "start" : (!stops.end.point ? "end" : null);
+                    if (empty) {
+                        stops[empty].input.focus();
+                    }
+                } else {
+                    setPickTarget(null);
+                }
+            });
+
+            Object.keys(stops).forEach(function (key) {
+                stops[key].input.addEventListener("focus", function () {
+                    setPickTarget(key);
+                });
+                stops[key].input.addEventListener("keydown", function (event) {
+                    if (event.key === "Enter") {
+                        calculateRoute();
+                    }
+                });
+            });
+
+            document.querySelectorAll(".pick-button").forEach(function (button) {
+                button.addEventListener("click", function () {
+                    setPickTarget(pickTarget === button.dataset.target ? null : button.dataset.target);
+                });
+            });
+
+            view.on("click", function (event) {
+                if (panel.hidden || !pickTarget) {
+                    return;
+                }
+                event.stopPropagation();
+                const key = pickTarget;
+                const point = event.mapPoint;
+                setStop(key, point, formatCoords(point));
+                drawRoute(null);
+
+                // Swap the coordinates for a street address when one is found.
+                locator.locationToAddress(GEOCODE_URL, { location: point }).then(function (candidate) {
+                    if (stops[key].point === point && candidate && candidate.address) {
+                        stops[key].text = candidate.address;
+                        stops[key].input.value = candidate.address;
+                    }
+                }).catch(function () {
+                    // Keep the coordinates.
+                });
+
+                setPickTarget(key === "start" && !stops.end.point ? "end" : null);
+            });
+
+            // Resolve a box to a point: the clicked point, typed "lat, lon", or a geocoded address.
+            const resolveStop = function (key) {
+                const stop = stops[key];
+                const text = stop.input.value.trim();
+                const name = key === "start" ? "starting point" : "destination";
+
+                if (!text) {
+                    return Promise.reject(new Error("Enter a " + name + "."));
+                }
+                if (stop.point && text === stop.text) {
+                    return Promise.resolve(stop.point);
+                }
+
+                const coords = text.match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/);
+                if (coords) {
+                    const point = new Point({ latitude: parseFloat(coords[1]), longitude: parseFloat(coords[2]) });
+                    setStop(key, point, text);
+                    return Promise.resolve(point);
+                }
+
+                return locator.addressToLocations(GEOCODE_URL, {
+                    address: { SingleLine: text },
+                    location: new Point({ longitude: CENTER[0], latitude: CENTER[1] }),
+                    searchExtent: new Extent({ xmin: -87.75, ymin: 36.2, xmax: -86.95, ymax: 36.75, spatialReference: { wkid: 4326 } }),
+                    countryCode: "USA",
+                    maxLocations: 1,
+                    outFields: ["Match_addr"]
+                }).then(function (candidates) {
+                    if (!candidates.length) {
+                        throw new Error("Could not find the " + name + " \"" + text + "\".");
+                    }
+                    setStop(key, candidates[0].location, candidates[0].address);
+                    return candidates[0].location;
+                });
+            };
+
+            const calculateRoute = function () {
+                setPickTarget(null);
+                calculateButton.disabled = true;
+                showResult("Calculating route…");
+
+                Promise.all([resolveStop("start"), resolveStop("end")])
+                    .then(function (points) {
+                        drawRoute(null);
+                        const mode = document.querySelector("input[name=routeMode]:checked").value;
+                        return callRpc("get_route", {
+                            start_lon: points[0].longitude,
+                            start_lat: points[0].latitude,
+                            end_lon: points[1].longitude,
+                            end_lat: points[1].latitude,
+                            p_mode: mode
+                        });
+                    })
+                    .then(function (geojson) {
+                        const feature = geojson.features[0];
+                        const geometry = feature.geometry;
+                        const paths = geometry.type === "LineString" ? [geometry.coordinates] : geometry.coordinates;
+                        const polyline = { type: "polyline", paths: paths, spatialReference: { wkid: 4326 } };
+                        drawRoute(polyline);
+
+                        const props = feature.properties;
+                        const miles = props.distance_m / 1609.344;
+                        const minutes = Math.max(1, Math.round(props.duration_s / 60));
+                        showResult(miles.toFixed(1) + " mi · about " + minutes + " min (estimated)");
+
+                        return view.goTo(routeLayer.graphics.toArray(), { duration: 800 }).then(function () {
+                            return view.zoom > 17 ? view.goTo({ zoom: 17 }) : null;
+                        });
+                    })
+                    .catch(function (error) {
+                        console.error(error);
+                        drawRoute(null);
+                        showResult(error.message || "Could not calculate the route.", true);
+                    })
+                    .then(function () {
+                        calculateButton.disabled = false;
+                    });
+            };
+
+            calculateButton.addEventListener("click", calculateRoute);
+
+            clearButton.addEventListener("click", function () {
+                Object.keys(stops).forEach(function (key) {
+                    setStop(key, null, "");
+                });
+                drawRoute(null);
+                showResult("");
+                setPickTarget("start");
+                stops.start.input.focus();
+            });
+        });
+    </script>
+</body>
+</html>
