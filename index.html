@@ -3,38 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coming Soon</title>
+    <title>ESRImap</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.34/esri/themes/light/main.css">
     <style>
+        html, body, #viewDiv {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f4f7f6;
-            color: #333;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            text-align: center;
         }
-        .container {
-            max-width: 600px;
-            padding: 20px;
-        }
-        h1 {
-            font-size: 3rem;
-            margin-bottom: 10px;
+        #status {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 8px 14px;
+            background: #fff;
             color: #2c3e50;
+            border-radius: 4px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+            font-size: 0.95rem;
+            z-index: 1;
         }
-        p {
-            font-size: 1.2rem;
-            color: #7f8c8d;
+        #status.error {
+            color: #c0392b;
+        }
+        #status[hidden] {
+            display: none;
         }
     </style>
+    <script src="https://js.arcgis.com/4.34/"></script>
 </head>
 <body>
-    <div class="container">
-        <h1>Coming Soon</h1>
-        <p>Our website is currently under construction. We'll be launching something amazing very soon!</p>
-    </div>
+    <div id="viewDiv"></div>
+    <div id="status">Loading boundary…</div>
+
+    <script>
+        // Public, browser-safe keys. Restrict the ArcGIS key to https://codyparham.com
+        // in your ArcGIS developer dashboard. The Supabase publishable key is read-only via RLS.
+        const ARCGIS_API_KEY = "AAPTajg4rGSoatdba_BbpfNHMXA..fu-MxrsEJaFLLHEeInEt_e7DRimxKj6DqViJi8CtQZkgBqvM-8ZCvzAdh8l63w5OcFTs-ndANq6Ad7jRBJOJOSmz8yzBQTE2KUOoakLIf1EhiNF1kmBgAOBhkhieDUv9xZXpm96zH4Q3oGXBnWmVJFnPnbL7Wx60KyYDz-NtQrisSam08-DZbRF7LQ9EPweIgM_fmYhs8riPkd-coie_pqEZf34dt457YN9uQ0WpWgAwAKVPV9Bn1JLXEcTL1Jk.AT1_8aYyB132";
+        const SUPABASE_URL = "https://lzyppxkivzwdtsxdquso.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_9881RD-FP11p3UssyK3UFQ_1GrN0j3E";
+
+        require([
+            "esri/config",
+            "esri/Map",
+            "esri/views/MapView",
+            "esri/layers/GeoJSONLayer",
+            "esri/widgets/Home",
+            "esri/widgets/BasemapToggle",
+            "esri/widgets/Legend",
+            "esri/widgets/Expand"
+        ], function (esriConfig, Map, MapView, GeoJSONLayer, Home, BasemapToggle, Legend, Expand) {
+            esriConfig.apiKey = ARCGIS_API_KEY;
+
+            const status = document.getElementById("status");
+            const showError = function (message) {
+                status.textContent = message;
+                status.className = "error";
+                status.hidden = false;
+            };
+
+            const map = new Map({ basemap: "arcgis/topographic" });
+
+            const view = new MapView({
+                container: "viewDiv",
+                map: map,
+                center: [-71.06, 42.33],
+                zoom: 11
+            });
+
+            view.ui.add(new Home({ view: view }), "top-left");
+            view.ui.add(new BasemapToggle({ view: view, nextBasemap: "arcgis/imagery" }), "bottom-right");
+            view.ui.add(new Expand({ view: view, content: new Legend({ view: view }), expanded: false }), "top-right");
+
+            fetch(SUPABASE_URL + "/rest/v1/rpc/get_order_boundary", {
+                method: "POST",
+                headers: {
+                    "apikey": SUPABASE_KEY,
+                    "Content-Type": "application/json"
+                },
+                body: "{}"
+            })
+                .then(function (response) {
+                    if (!response.ok) {
+                        throw new Error("Supabase returned " + response.status);
+                    }
+                    return response.json();
+                })
+                .then(function (geojson) {
+                    if (!geojson.features || geojson.features.length === 0) {
+                        throw new Error("No boundary data found");
+                    }
+
+                    const blob = new Blob([JSON.stringify(geojson)], { type: "application/json" });
+
+                    const boundaryLayer = new GeoJSONLayer({
+                        url: URL.createObjectURL(blob),
+                        title: "Order boundary",
+                        renderer: {
+                            type: "simple",
+                            symbol: {
+                                type: "simple-fill",
+                                color: [44, 62, 80, 0.2],
+                                outline: { color: [44, 62, 80, 1], width: 2 }
+                            }
+                        },
+                        popupTemplate: {
+                            title: "{name}",
+                            content: "Boundary ID: {id}"
+                        }
+                    });
+
+                    map.add(boundaryLayer);
+
+                    return boundaryLayer.when(function () {
+                        return view.goTo(boundaryLayer.fullExtent.expand(1.1));
+                    });
+                })
+                .then(function () {
+                    status.hidden = true;
+                })
+                .catch(function (error) {
+                    console.error(error);
+                    showError("Could not load the boundary. Please try again later.");
+                });
+        });
+    </script>
 </body>
 </html>
