@@ -12,8 +12,8 @@
             meta: "Roads, driving directions and PostGIS routing for Clarksville, TN",
             src: "maps/montgomery-roads/"
         },
-        { name: "Powerlines Risk Assessment" },
-        { name: "Placeholder" }
+        { name: "Powerlines Storm Risk Assessment" },
+        { name: "Clarksville, TN growth tracker" }
     ];
 
     const ICON_MAP = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/></svg>';
