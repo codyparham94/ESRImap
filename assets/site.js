@@ -7,12 +7,12 @@
     const PROJECTS = [
         {
             id: "montgomery-roads",
-            name: "Clarksville, TN Directions",
+            name: "Clarksville, TN Driving Directions",
             title: "Interactive Montgomery County Roadways",
             meta: "Roads, driving directions and PostGIS routing for Clarksville, TN",
             src: "maps/montgomery-roads/"
         },
-        { name: "Placeholder" },
+        { name: "Powerlines Risk Assessment" },
         { name: "Placeholder" }
     ];
 
