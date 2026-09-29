@@ -56,31 +56,70 @@
             display: none;
         }
 
-        /* Directions */
-        #directionsToggle {
+        /* Expandable cards (directions, layers) */
+        .map-card {
+            min-width: 200px;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            background: #fff;
+        }
+        .map-card-header {
             display: flex;
             align-items: center;
-            justify-content: center;
-        }
-        #directionsToggle.active {
+            gap: 10px;
+            width: 100%;
+            padding: 10px 14px;
+            border: 0;
             background: #2c3e50;
             color: #fff;
+            font: inherit;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-align: left;
+            cursor: pointer;
         }
-        #directionsToggle svg {
+        .map-card-header:hover {
+            background: #34495e;
+        }
+        .map-card-header:focus-visible {
+            outline: 3px solid #5dade2;
+            outline-offset: -3px;
+        }
+        .map-card-header svg {
+            flex: none;
             width: 20px;
             height: 20px;
         }
-        #directionsPanel {
-            width: min(300px, calc(100vw - 80px));
+        .map-card-header span {
+            flex: 1;
+        }
+        .map-card-header .chevron {
+            width: 16px;
+            height: 16px;
+            transition: transform 0.15s ease;
+        }
+        .map-card-header[aria-expanded="true"] .chevron {
+            transform: rotate(180deg);
+        }
+        .map-card-body {
             padding: 12px;
+            max-height: calc(100vh - 190px);
+            overflow-y: auto;
             box-sizing: border-box;
         }
-        #directionsPanel[hidden] {
+        .map-card-body[hidden] {
             display: none;
         }
-        #directionsPanel h2 {
-            margin: 0 0 10px;
-            font-size: 1rem;
+        .map-card.open {
+            width: min(300px, calc(100vw - 80px));
+        }
+        #layersPanel {
+            padding: 0;
+        }
+        #layersPanel .esri-layer-list {
+            width: auto;
         }
         .field {
             margin-bottom: 10px;
@@ -187,44 +226,59 @@
     <div id="viewDiv"></div>
     <div id="status">Loading layers…</div>
 
-    <button id="directionsToggle" class="esri-widget--button esri-widget" type="button"
-            title="Driving directions" aria-label="Driving directions" aria-expanded="false">
-        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
-        </svg>
-    </button>
+    <section id="directionsCard" class="map-card esri-widget">
+        <button id="directionsToggle" class="map-card-header" type="button" aria-expanded="false" aria-controls="directionsPanel">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
+            </svg>
+            <span>GET DIRECTIONS</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
+        </button>
 
-    <div id="directionsPanel" class="esri-widget" hidden>
-        <h2>Driving directions</h2>
-        <div class="field">
-            <label for="startInput">Starting Point</label>
-            <div class="field-row">
-                <input id="startInput" type="text" placeholder="Address, or click the map" autocomplete="off">
-                <button class="pick-button" type="button" data-target="start" title="Pick starting point on map" aria-label="Pick starting point on map">
-                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-                </button>
+        <div id="directionsPanel" class="map-card-body" hidden>
+            <div class="field">
+                <label for="startInput">Starting Point</label>
+                <div class="field-row">
+                    <input id="startInput" type="text" placeholder="Address, or click the map" autocomplete="off">
+                    <button class="pick-button" type="button" data-target="start" title="Pick starting point on map" aria-label="Pick starting point on map">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                    </button>
+                </div>
             </div>
-        </div>
-        <div class="field">
-            <label for="endInput">Destination</label>
-            <div class="field-row">
-                <input id="endInput" type="text" placeholder="Address, or click the map" autocomplete="off">
-                <button class="pick-button" type="button" data-target="end" title="Pick destination on map" aria-label="Pick destination on map">
-                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-                </button>
+            <div class="field">
+                <label for="endInput">Destination</label>
+                <div class="field-row">
+                    <input id="endInput" type="text" placeholder="Address, or click the map" autocomplete="off">
+                    <button class="pick-button" type="button" data-target="end" title="Pick destination on map" aria-label="Pick destination on map">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                    </button>
+                </div>
             </div>
+            <p class="hint">Click a box (or its pin), then click the map to set that point.</p>
+            <div class="mode" role="radiogroup" aria-label="Route type">
+                <label><input type="radio" name="routeMode" value="distance" checked> Shortest distance</label>
+                <label><input type="radio" name="routeMode" value="time"> Fastest</label>
+            </div>
+            <div class="actions">
+                <button id="calculateRoute" type="button">Calculate Route</button>
+                <button id="clearRoute" type="button">Clear</button>
+            </div>
+            <div id="routeResult" aria-live="polite"></div>
         </div>
-        <p class="hint">Click a box (or its pin), then click the map to set that point.</p>
-        <div class="mode" role="radiogroup" aria-label="Route type">
-            <label><input type="radio" name="routeMode" value="distance" checked> Shortest distance</label>
-            <label><input type="radio" name="routeMode" value="time"> Fastest</label>
+    </section>
+
+    <section id="layersCard" class="map-card esri-widget">
+        <button id="layersToggle" class="map-card-header" type="button" aria-expanded="false" aria-controls="layersPanel">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="m11.99 18.54-7.37-5.73L3 14.07l9 7 9-7-1.63-1.27zM12 16l7.36-5.73L21 9l-9-7-9 7 1.63 1.27z"/>
+            </svg>
+            <span>LAYERS</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
+        </button>
+        <div id="layersPanel" class="map-card-body" hidden>
+            <div id="layerListDiv"></div>
         </div>
-        <div class="actions">
-            <button id="calculateRoute" type="button">Calculate Route</button>
-            <button id="clearRoute" type="button">Clear</button>
-        </div>
-        <div id="routeResult" aria-live="polite"></div>
-    </div>
+    </section>
 
     <script>
         // Public, browser-safe keys. Restrict the ArcGIS key to https://codyparham.com
@@ -249,10 +303,9 @@
             "esri/rest/locator",
             "esri/widgets/Home",
             "esri/widgets/BasemapToggle",
-            "esri/widgets/LayerList",
-            "esri/widgets/Expand"
+            "esri/widgets/LayerList"
         ], function (esriConfig, Map, MapView, Graphic, GeoJSONLayer, GraphicsLayer, Point, Extent,
-                     locator, Home, BasemapToggle, LayerList, Expand) {
+                     locator, Home, BasemapToggle, LayerList) {
             esriConfig.apiKey = ARCGIS_API_KEY;
 
             const status = document.getElementById("status");
@@ -296,19 +349,51 @@
 
             view.ui.add(new Home({ view: view }), "top-left");
             view.ui.add(new BasemapToggle({ view: view, nextBasemap: "arcgis/imagery" }), "bottom-right");
-            view.ui.add(new Expand({
+            new LayerList({
                 view: view,
-                content: new LayerList({
-                    view: view,
-                    listItemCreatedFunction: function (event) {
-                        if (event.item.layer.type !== "graphics") {
-                            event.item.panel = { content: "legend", open: false };
-                        }
+                container: "layerListDiv",
+                listItemCreatedFunction: function (event) {
+                    if (event.item.layer.type !== "graphics") {
+                        event.item.panel = { content: "legend", open: false };
                     }
-                }),
-                expandTooltip: "Layers and legend",
-                expanded: false
-            }), "top-right");
+                }
+            });
+
+            // Expandable cards. On narrow screens only one is open at a time.
+            const cards = [];
+            const setCardOpen = function (card, open) {
+                card.body.hidden = !open;
+                card.header.setAttribute("aria-expanded", String(open));
+                card.element.classList.toggle("open", open);
+                if (card.onToggle) {
+                    card.onToggle(open);
+                }
+            };
+            const addCard = function (elementId, position, onToggle) {
+                const element = document.getElementById(elementId);
+                const card = {
+                    element: element,
+                    header: element.querySelector(".map-card-header"),
+                    body: element.querySelector(".map-card-body"),
+                    onToggle: onToggle
+                };
+                card.header.addEventListener("click", function () {
+                    const opening = card.body.hidden;
+                    if (opening && window.matchMedia("(max-width: 640px)").matches) {
+                        cards.forEach(function (other) {
+                            if (other !== card && !other.body.hidden) {
+                                setCardOpen(other, false);
+                            }
+                        });
+                    }
+                    setCardOpen(card, opening);
+                });
+                cards.push(card);
+                view.ui.add(element, position);
+                return card;
+            };
+
+            addCard("layersCard", "top-right");
 
             // ---------------------------------------------------------------
             // Layers (drawn bottom to top)
@@ -466,14 +551,11 @@
             const routeLayer = new GraphicsLayer({ title: "Route", listMode: "hide" });
             map.add(routeLayer);
 
-            const toggle = document.getElementById("directionsToggle");
             const panel = document.getElementById("directionsPanel");
             const calculateButton = document.getElementById("calculateRoute");
             const clearButton = document.getElementById("clearRoute");
             const result = document.getElementById("routeResult");
 
-            view.ui.add(toggle, "top-left");
-            view.ui.add(panel, "top-left");
 
             // Each stop keeps the text shown in its box and, once known, its map point.
             const stops = {
@@ -550,12 +632,9 @@
                 drawRoute(null);
             };
 
-            toggle.addEventListener("click", function () {
-                const opening = panel.hidden;
-                panel.hidden = !opening;
-                toggle.classList.toggle("active", opening);
-                toggle.setAttribute("aria-expanded", String(opening));
-                if (opening) {
+            // Added after the layers card, so it sits underneath it.
+            addCard("directionsCard", "top-right", function (open) {
+                if (open) {
                     const empty = !stops.start.point ? "start" : (!stops.end.point ? "end" : null);
                     if (empty) {
                         stops[empty].input.focus();
