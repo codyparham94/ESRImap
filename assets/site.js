@@ -6,6 +6,13 @@
 (function () {
     const PROJECTS = [
         {
+            id: "rexplorer",
+            name: "RExplorer",
+            title: "RExplorer: Commercial Property Explorer",
+            meta: "Parcels, flood zones and site data for evaluating commercial property in Clarksville, TN",
+            src: "https://rexplorer.codyparham.com/"
+        },
+        {
             id: "montgomery-roads",
             name: "Clarksville, TN Driving Directions",
             title: "Interactive Montgomery County Roadways",
