@@ -2,12 +2,14 @@
 //
 // To add a project: put its page in maps/<id>/index.html and add an entry
 // with id, name (sidebar label), title, meta (one-line description) and src.
+// An optional logo (image path) is shown in the sidebar in place of the name.
 // An entry with only a name is shown as a "Soon" placeholder.
 (function () {
     const PROJECTS = [
         {
             id: "rexplorer",
             name: "RExplorer",
+            logo: "assets/rexplorer-logo.png",
             title: "RExplorer: Commercial Property Explorer",
             meta: "Parcels, flood zones and site data for evaluating commercial property in Clarksville, TN",
             src: "https://rexplorer.codyparham.com/"
@@ -20,7 +22,7 @@
             src: "maps/montgomery-roads/"
         },
         { name: "Powerlines Storm Risk Assessment" },
-        { name: "Clarksville, TN growth tracker" }
+        { name: "Clarksville, TN Growth Tracker" }
     ];
 
     const ICON_MAP = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/></svg>';
@@ -30,18 +32,17 @@
     // On the projects page, project links only change the hash, so the page doesn't reload.
     const renderSidebar = function (sidebar, options) {
         const projectsHref = options.page === "projects" ? "" : "projects.html";
-        const live = PROJECTS.filter(function (project) {
-            return project.src;
-        });
-
         const items = PROJECTS.map(function (project) {
             if (!project.src) {
                 return '<li><div class="project-soon" aria-disabled="true">' + ICON_SOON +
                     '<span class="project-name">' + project.name + '</span>' +
                     '<span class="soon-badge">Soon</span></div></li>';
             }
+            const label = project.logo
+                ? '<img class="project-logo" src="' + project.logo + '" alt="' + project.name + '" width="106" height="24">'
+                : project.name;
             return '<li><a class="project-link" href="' + projectsHref + '#/' + project.id + '">' + ICON_MAP +
-                '<span class="project-name">' + project.name + '</span>' +
+                '<span class="project-name">' + label + '</span>' +
                 '<span class="live-dot" aria-hidden="true"></span><span class="sr-only">(live)</span></a></li>';
         }).join("");
 
@@ -58,13 +59,7 @@
             '<nav class="nav" aria-label="Projects">' +
                 '<p class="nav-label">Projects</p>' +
                 '<ul class="project-list">' + items + '</ul>' +
-            '</nav>' +
-            '<div class="sidebar-footer">' +
-                '<p class="progress-label">Projects live</p>' +
-                '<p class="progress-value">' + live.length + ' of ' + PROJECTS.length + '</p>' +
-                '<div class="progress" aria-hidden="true"><span style="width: ' +
-                    (100 * live.length / PROJECTS.length) + '%"></span></div>' +
-            '</div>';
+            '</nav>';
     };
 
     window.Site = {
