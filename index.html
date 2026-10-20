@@ -22,13 +22,10 @@
         .hero {
             display: flex;
             flex-direction: column;
-            align-self: flex-start;
-            gap: var(--space-4);
-            max-width: 100%;
-            padding: var(--space-6) clamp(var(--space-5), 3vw, 40px);
-            background: var(--material);
-            -webkit-backdrop-filter: blur(20px) saturate(160%);
-            backdrop-filter: blur(20px) saturate(160%);
+            align-items: center;
+            gap: var(--space-5);
+            padding: var(--space-6) 0;
+            text-align: center;
         }
         .hero h1 {
             margin: 0;
@@ -44,17 +41,11 @@
             font-weight: 600;
             letter-spacing: -0.01em;
         }
-        .hero-intro {
-            max-width: 58ch;
-            margin: 0;
-            color: var(--muted);
-            font-size: clamp(1rem, 1.4vw, 1.125rem);
-            line-height: 1.6;
-        }
         .profile-actions {
             display: flex;
             flex-wrap: wrap;
             gap: var(--space-3);
+            justify-content: center;
         }
         .profile-actions .button {
             height: 44px;
@@ -248,12 +239,11 @@
 
     <main class="page">
         <div class="about section" id="about">
-            <section class="card hero" aria-label="Profile">
+            <section class="hero" aria-label="Profile">
                 <div>
                     <h1>Cody Parham</h1>
                     <p class="profile-role">GIS Specialist · Clarksville, TN</p>
                 </div>
-                <p class="hero-intro">I build web maps, spatial tools and data pipelines that turn geospatial data into something people can use.</p>
                 <div class="profile-actions">
                     <a class="button button-glow" href="#projects">
                         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/></svg>
