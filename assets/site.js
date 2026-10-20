@@ -1,8 +1,8 @@
-// Shared sidebar for codyparham.com. The project list lives here only.
+// Project list and project windows for codyparham.com. The project list lives here only.
 //
 // To add a project: put its page in maps/<id>/index.html and add an entry
-// with id, name (sidebar label), title, meta (one-line description) and src.
-// An optional logo (image path) is shown in the sidebar in place of the name.
+// with id, name (nav label), title, meta (one-line description) and src.
+// An optional logo (image path) is shown in its window in place of the title.
 // An entry with only a name is shown as a "Soon" placeholder.
 (function () {
     const PROJECTS = [
@@ -16,54 +16,91 @@
         },
         {
             id: "montgomery-roads",
-            name: "Clarksville, TN Driving Directions",
-            title: "Interactive Montgomery County Roadways",
-            meta: "Roads, driving directions and PostGIS routing for Clarksville, TN",
+            name: "Driving Directions",
+            title: "Clarksville, TN Driving Directions",
+            meta: "Roads, driving directions and PostGIS routing for Montgomery County, TN",
             src: "maps/montgomery-roads/"
         },
         { name: "Powerlines Storm Risk Assessment" },
         { name: "Clarksville, TN Growth Tracker" }
     ];
 
-    const ICON_MAP = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/></svg>';
-    const ICON_SOON = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke-dasharray="3 3"/></svg>';
+    const ICON_OPEN = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>';
 
-    // options.page: "about" (the home page, index.html) or "projects" (projects.html).
-    // On the projects page, project links only change the hash, so the page doesn't reload.
-    const renderSidebar = function (sidebar, options) {
-        const projectsHref = options.page === "projects" ? "" : "projects.html";
-        const items = PROJECTS.map(function (project) {
-            if (!project.src) {
-                return '<li><div class="project-soon" aria-disabled="true">' + ICON_SOON +
-                    '<span class="project-name">' + project.name + '</span>' +
-                    '<span class="soon-badge">Soon</span></div></li>';
-            }
-            const label = project.logo
-                ? '<img class="project-logo" src="' + project.logo + '" alt="' + project.name + '" width="106" height="24">'
-                : project.name;
-            return '<li><a class="project-link" href="' + projectsHref + '#/' + project.id + '">' + ICON_MAP +
-                '<span class="project-name">' + label + '</span>' +
-                '<span class="live-dot" aria-hidden="true"></span><span class="sr-only">(live)</span></a></li>';
+    const live = PROJECTS.filter(function (project) {
+        return project.src;
+    });
+    const soon = PROJECTS.filter(function (project) {
+        return !project.src;
+    });
+
+    // One full-width window per live project, then the "Soon" placeholders.
+    const renderProjects = function (container) {
+        const windows = live.map(function (project, index) {
+            const heading = project.logo
+                ? '<img class="project-logo" src="' + project.logo + '" alt="' + project.name + '" width="132" height="30">' +
+                    '<h3 class="sr-only">' + project.title + '</h3>'
+                : '<h3>' + project.title + '</h3>';
+            return '<section class="card project-window" id="' + project.id + '" aria-label="' + project.title + '">' +
+                '<div class="card-head">' +
+                    '<div class="project-title">' +
+                        '<p class="eyebrow"><span class="live-dot" aria-hidden="true"></span>Project ' +
+                            String(index + 1).padStart(2, "0") + '</p>' +
+                        heading +
+                        '<p>' + project.meta + '</p>' +
+                    '</div>' +
+                    '<a class="button" href="' + project.src + '" target="_blank" rel="noopener" aria-label="Open ' +
+                        project.title + ' in a new tab"><span class="label-long">Open full page</span>' + ICON_OPEN + '</a>' +
+                '</div>' +
+                '<iframe src="' + project.src + '" title="' + project.title + '" loading="lazy" allowfullscreen></iframe>' +
+            '</section>';
         }).join("");
 
-        sidebar.innerHTML =
-            '<div class="brand">' +
-                '<a class="brand-mark" href="./" aria-label="Home">CP</a>' +
-                '<div class="brand-text">' +
-                    '<span class="brand-name">Cody Parham</span>' +
-                    '<a class="connect-link" href="./"' +
-                        (options.page === "about" ? ' aria-current="page"' : '') +
-                        '>Click here to connect with me!</a>' +
-                '</div>' +
-            '</div>' +
-            '<nav class="nav" aria-label="Projects">' +
-                '<p class="nav-label">Projects</p>' +
-                '<ul class="project-list">' + items + '</ul>' +
-            '</nav>';
+        const placeholders = soon.length
+            ? '<ul class="soon-list" aria-label="Coming soon">' + soon.map(function (project) {
+                return '<li>' + project.name + '<span class="soon-badge">Soon</span></li>';
+            }).join("") + '</ul>'
+            : "";
+
+        container.innerHTML = windows + placeholders;
+    };
+
+    // Nav links to each live project, after the static links already in the list.
+    const renderNav = function (list) {
+        list.insertAdjacentHTML("beforeend", live.map(function (project) {
+            return '<li class="nav-optional"><a href="#' + project.id + '">' + project.name + '</a></li>';
+        }).join(""));
+    };
+
+    // Highlight the nav link for the section in view.
+    const trackSections = function (list) {
+        const links = Array.from(list.querySelectorAll('a[href^="#"]'));
+        const sections = links.map(function (link) {
+            return document.getElementById(link.getAttribute("href").slice(1));
+        }).filter(Boolean);
+        const observer = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (!entry.isIntersecting) {
+                    return;
+                }
+                links.forEach(function (link) {
+                    if (link.getAttribute("href") === "#" + entry.target.id) {
+                        link.setAttribute("aria-current", "true");
+                    } else {
+                        link.removeAttribute("aria-current");
+                    }
+                });
+            });
+        }, { rootMargin: "-45% 0px -50% 0px" });
+        sections.forEach(function (section) {
+            observer.observe(section);
+        });
     };
 
     window.Site = {
         projects: PROJECTS,
-        renderSidebar: renderSidebar
+        renderProjects: renderProjects,
+        renderNav: renderNav,
+        trackSections: trackSections
     };
 })();

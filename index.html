@@ -12,45 +12,53 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
     <link rel="stylesheet" href="assets/site.css">
     <style>
-        .content {
-            overflow-y: auto;
-        }
         .about {
             display: flex;
             flex-direction: column;
             gap: var(--space-5);
-            width: 100%;
-            max-width: 1120px;
         }
 
-        /* Profile */
-        .profile {
+        /* Hero: the first thing you see */
+        .hero {
             display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: var(--space-5);
-            padding: var(--space-5);
+            flex-direction: column;
+            align-self: flex-start;
+            gap: var(--space-4);
+            max-width: 100%;
+            padding: var(--space-6) clamp(var(--space-5), 3vw, 40px);
+            background: var(--material);
+            -webkit-backdrop-filter: blur(20px) saturate(160%);
+            backdrop-filter: blur(20px) saturate(160%);
         }
-        .profile-text {
-            flex: 1;
-            min-width: 220px;
-        }
-        .profile h1 {
+        .hero h1 {
             margin: 0;
-            font-size: var(--text-2xl);
+            font-size: clamp(2.75rem, 7vw, 4.75rem);
             font-weight: 800;
-            letter-spacing: -0.025em;
-            line-height: 1.15;
+            letter-spacing: -0.035em;
+            line-height: 1.02;
         }
         .profile-role {
-            margin: var(--space-1) 0 0;
+            margin: var(--space-2) 0 0;
+            color: var(--accent);
+            font-size: clamp(1.05rem, 1.6vw, 1.25rem);
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+        .hero-intro {
+            max-width: 58ch;
+            margin: 0;
             color: var(--muted);
-            font-size: var(--text-md);
+            font-size: clamp(1rem, 1.4vw, 1.125rem);
+            line-height: 1.6;
         }
         .profile-actions {
             display: flex;
             flex-wrap: wrap;
             gap: var(--space-3);
+        }
+        .profile-actions .button {
+            height: 44px;
+            padding: 0 var(--space-5);
         }
 
         /* Two columns: story on the left, facts on the right */
@@ -221,170 +229,185 @@
             .stack {
                 gap: var(--space-4);
             }
-            .profile,
             .card-body {
                 padding: var(--space-4);
-            }
-            .profile h1 {
-                font-size: var(--text-xl);
             }
         }
     </style>
 </head>
 <body>
-    <div class="app">
-        <aside class="sidebar" id="sidebar"></aside>
+    <header class="site-nav">
+        <nav class="site-nav-inner" aria-label="Sections">
+            <a class="brand" href="#about"><span class="brand-mark" aria-hidden="true">CP</span>Cody Parham</a>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#about">About</a></li>
+                <li><a href="#projects">Projects</a></li>
+            </ul>
+        </nav>
+    </header>
 
-        <div class="main">
-        <!-- <header class="topbar">
-                <ol class="crumbs" aria-label="Breadcrumb">
-                    <li aria-current="page">About me</li>
-                </ol>
-            </header> -->
+    <main class="page">
+        <div class="about section" id="about">
+            <section class="card hero" aria-label="Profile">
+                <div>
+                    <h1>Cody Parham</h1>
+                    <p class="profile-role">GIS Specialist · Clarksville, TN</p>
+                </div>
+                <p class="hero-intro">I build web maps, spatial tools and data pipelines that turn geospatial data into something people can use.</p>
+                <div class="profile-actions">
+                    <a class="button button-glow" href="#projects">
+                        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/></svg>
+                        View my projects
+                    </a>
+                    <a class="button button-ghost" href="mailto:codyparham94@gmail.com">
+                        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+                        Email me
+                    </a>
+                    <a class="button button-ghost" href="assets/CodyParham_Resume2026.pdf" download>
+                        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>
+                        Download resume
+                    </a>
+                </div>
+            </section>
 
-            <main class="content">
-                <div class="about">
-                    <section class="card profile" aria-label="Profile">
-                        <div class="profile-text">
-                            <h1>Cody Parham</h1>
-                            <p class="profile-role">GIS Specialist · Clarksville, TN</p>
+            <div class="about-grid">
+                <div class="stack">
+                    <section class="card" aria-labelledby="aboutTitle">
+                        <div class="card-head">
+                            <h2 id="aboutTitle">About me</h2>
                         </div>
-                        <div class="profile-actions">
-                            <a class="button" href="mailto:codyparham94@gmail.com">
-                                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
-                                Email me
-                            </a>
-                            <a class="button button-ghost" href="assets/CodyParham_Resume2026.pdf" download>
-                                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>
-                                Download resume
-                            </a>
-                            <a class="button button-ghost button-glow" href="projects.html">
-                                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/></svg>
-                                View my projects
-                            </a>
+                        <div class="card-body">
+                            <!-- TODO: replace with your own About me text. -->
+                            <p>I'm a GIS professional with more than seven years of experience building, maintaining and automating spatial data systems. My focus now is on GIS development: building the web maps, tools and data pipelines that turn geospatial data into something people can use.</p>
+                            <p>My background runs from imagery to infrastructure. At Wiser Imagery Services, I did feature extraction and remote sensing work for geospatial intelligence clients. Later I joined the R&D Special Projects team, where I wrote Python scripts that ran large-scale data conflation overnight. I also managed PostgreSQL geodatabases and deployed and maintained enterprise SDE environments with ArcGIS Server. Most recently, at Atmos Energy, I worked on utility network data in ArcGIS and Smallworld GDO. I turned as-built projects into accurate pipeline records, managed asset inventory and trained teammates on GIS best practices.</p>
+                            <p>Across both roles, the work I enjoyed most was development. That meant scripting a repetitive workflow away, writing SQL to clean up a messy dataset, or building an interactive map with the ArcGIS Maps SDK for JavaScript. I care about clean data models, maintainable code and applications that make complex spatial information easy to understand.</p>
+                            <p>I hold a B.S. in Geographic Information Systems from Austin Peay State University, and I'm currently completing a Master's in Data Analytics there. My current projects combine GIS and data science, such as a storm-driven power outage risk model for Clarksville, TN.</p>
+                            <p>I'm looking for a GIS Developer role where I can build web mapping applications, automate spatial workflows and help teams get more out of their geospatial data.</p>
                         </div>
                     </section>
 
-                    <div class="about-grid">
-                        <div class="stack">
-                            <section class="card" aria-labelledby="aboutTitle">
-                                <div class="card-head">
-                                    <h2 id="aboutTitle">About me</h2>
-                                </div>
-                                <div class="card-body">
-                                    <!-- TODO: replace with your own About me text. -->
-                                    <p>I'm a GIS professional with more than seven years of experience building, maintaining and automating spatial data systems. My focus now is on GIS development: building the web maps, tools and data pipelines that turn geospatial data into something people can use.</p>
-                                    <p>My background runs from imagery to infrastructure. At Wiser Imagery Services, I did feature extraction and remote sensing work for geospatial intelligence clients. Later I joined the R&D Special Projects team, where I wrote Python scripts that ran large-scale data conflation overnight. I also managed PostgreSQL geodatabases and deployed and maintained enterprise SDE environments with ArcGIS Server. Most recently, at Atmos Energy, I worked on utility network data in ArcGIS and Smallworld GDO. I turned as-built projects into accurate pipeline records, managed asset inventory and trained teammates on GIS best practices.</p>
-                                    <p>Across both roles, the work I enjoyed most was development. That meant scripting a repetitive workflow away, writing SQL to clean up a messy dataset, or building an interactive map with the ArcGIS Maps SDK for JavaScript. I care about clean data models, maintainable code and applications that make complex spatial information easy to understand.</p>
-                                    <p>I hold a B.S. in Geographic Information Systems from Austin Peay State University, and I'm currently completing a Master's in Data Analytics there. My current projects combine GIS and data science, such as a storm-driven power outage risk model for Clarksville, TN.</p>
-                                    <p>I'm looking for a GIS Developer role where I can build web mapping applications, automate spatial workflows and help teams get more out of their geospatial data.</p>
-                                </div>
-                            </section>
-
-                            <section class="card" aria-labelledby="experienceTitle">
-                                <div class="card-head">
-                                    <h2 id="experienceTitle">Professional experience</h2>
-                                </div>
-                                <div class="card-body">
-                                    <ol class="timeline">
-                                        <li class="role">
-                                            <div class="role-head">
-                                                <h3>GIS Specialist - Utility Network</h3>
-                                                <span class="role-dates">January 2024 – September 2026</span>
-                                            </div>
-                                            <p class="role-org">Atmos Energy · Remote</p>
-                                            <ul>
-                                                <li>Utilized ESRI ArcGIS and Smallworld GDO to digitize natural gas pipeline as-built projects according to specifications</li>
-                                                <li>Performed routine asset management of natural gas pipeline inventory, routine address verification, client communication, and documentation for technical projects</li>
-                                                <li>Trains and supports team members in GIS software usage and best practices to ensure high-quality data management</li>
-                                                <li>Analyzed and interpreted project specs with CAD and other proprietary software</li>
-                                            </ul>
-                                        </li>
-                                        <li class="role">
-                                            <div class="role-head">
-                                                <h3>GIS Analyst</h3>
-                                                <span class="role-dates">November 2018 – September 2023</span>
-                                            </div>
-                                            <p class="role-org">Wiser Imagery Services · Murfreesboro, TN / Remote</p>
-                                            <ul>
-                                                <li>Contributed to diverse projects for geospatial intelligence agencies (Janus, Leidos, Hexagon, Axim) specializing in Feature Data Extraction, Remote Sensing, and satellite imagery analysis using ESRI products</li>
-                                                <li>Managed geodatabases with SQL using Postgres and other tools</li>
-                                                <li>Deployed, edited, and maintained SDE servers using ArcServer</li>
-                                                <li>Promoted to the R&amp;D Special Projects team, focusing on back-end mass data conflation</li>
-                                                <li>Developed Python scripts to automate the conflation of large datasets overnight</li>
-                                                <li>Served on the QC/QA team</li>
-                                            </ul>
-                                        </li>
-                                    </ol>
-                                </div>
-                            </section>
+                    <section class="card" aria-labelledby="experienceTitle">
+                        <div class="card-head">
+                            <h2 id="experienceTitle">Professional experience</h2>
                         </div>
-
-                        <div class="stack">
-                            <section class="card" aria-labelledby="skillsTitle">
-                                <div class="card-head">
-                                    <h2 id="skillsTitle">Skills</h2>
-                                </div>
-                                <div class="card-body">
-                                    <ul class="chips" aria-label="Tools">
-                                        <li>ESRI Suite (Server, Online, Pro, Enterprise, Storymaps, UN, SDK)</li>
-                                        <li>AWS / Cloud Services</li>
-                                        <li>QGIS</li>
-                                        <li>SQL Database Management</li>
-                                        <li>Python</li>
-                                        <li>JavaScript</li>
-                                        <li>HTML</li>
-                                        <li>CAD</li>
-                                        <li>Data Analysis</li>
-                                        <li>Git</li>
+                        <div class="card-body">
+                            <ol class="timeline">
+                                <li class="role">
+                                    <div class="role-head">
+                                        <h3>GIS Specialist - Utility Network</h3>
+                                        <span class="role-dates">January 2024 – September 2026</span>
+                                    </div>
+                                    <p class="role-org">Atmos Energy · Remote</p>
+                                    <ul>
+                                        <li>Utilized ESRI ArcGIS and Smallworld GDO to digitize natural gas pipeline as-built projects according to specifications</li>
+                                        <li>Performed routine asset management of natural gas pipeline inventory, routine address verification, client communication, and documentation for technical projects</li>
+                                        <li>Trains and supports team members in GIS software usage and best practices to ensure high-quality data management</li>
+                                        <li>Analyzed and interpreted project specs with CAD and other proprietary software</li>
                                     </ul>
-                                    <ul class="skills">
-                                        <li>Experience with industry standard GIS software &amp; tools for utility network maintenance</li>
-                                        <li>Proficiency with ESRI Enterprise, CAD, SQL, Python scripting, Server deployment and maintainment</li>
-                                        <li>Web mapping development with JavaScript, HTML, and the Esri ArcGIS Maps SDK for JavaScript</li>
-                                        <li>Ability to analyze and maintain GIS utility networks</li>
-                                        <li>Microsoft Teams, Sharepoint, Office experience</li>
+                                </li>
+                                <li class="role">
+                                    <div class="role-head">
+                                        <h3>GIS Analyst</h3>
+                                        <span class="role-dates">November 2018 – September 2023</span>
+                                    </div>
+                                    <p class="role-org">Wiser Imagery Services · Murfreesboro, TN / Remote</p>
+                                    <ul>
+                                        <li>Contributed to diverse projects for geospatial intelligence agencies (Janus, Leidos, Hexagon, Axim) specializing in Feature Data Extraction, Remote Sensing, and satellite imagery analysis using ESRI products</li>
+                                        <li>Managed geodatabases with SQL using Postgres and other tools</li>
+                                        <li>Deployed, edited, and maintained SDE servers using ArcServer</li>
+                                        <li>Promoted to the R&amp;D Special Projects team, focusing on back-end mass data conflation</li>
+                                        <li>Developed Python scripts to automate the conflation of large datasets overnight</li>
+                                        <li>Served on the QC/QA team</li>
                                     </ul>
-                                </div>
-                            </section>
-
-                            <section class="card" aria-labelledby="educationTitle">
-                                <div class="card-head">
-                                    <h2 id="educationTitle">Education</h2>
-                                </div>
-                                <div class="card-body">
-                                    <ul class="degrees">
-                                        <li>
-                                            <span class="in-progress">In progress</span>
-                                            <p class="degree">Master's Degree in Data Analytics</p>
-                                            <p class="school">Currently attending Austin Peay State University</p>
-                                        </li>
-                                        <li>
-                                            <p class="degree">Bachelor of Science in Geographic Information Systems (GIS)</p>
-                                            <p class="school">Austin Peay State University</p>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </section>
-
-                            <section class="card" aria-labelledby="contactTitle">
-                                <div class="card-head">
-                                    <h2 id="contactTitle">Contact</h2>
-                                </div>
-                                <div class="card-body">
-                                    <p class="degree"><a href="mailto:codyparham94@gmail.com">codyparham94@gmail.com</a></p>
-                                </div>
-                            </section>
+                                </li>
+                            </ol>
                         </div>
-                    </div>
+                    </section>
                 </div>
-            </main>
+
+                <div class="stack">
+                    <section class="card" aria-labelledby="skillsTitle">
+                        <div class="card-head">
+                            <h2 id="skillsTitle">Skills</h2>
+                        </div>
+                        <div class="card-body">
+                            <ul class="chips" aria-label="Tools">
+                                <li>ESRI Suite (Server, Online, Pro, Enterprise, Storymaps, UN, SDK)</li>
+                                <li>AWS / Cloud Services</li>
+                                <li>QGIS</li>
+                                <li>SQL Database Management</li>
+                                <li>Python</li>
+                                <li>JavaScript</li>
+                                <li>HTML</li>
+                                <li>CAD</li>
+                                <li>Data Analysis</li>
+                                <li>Git</li>
+                            </ul>
+                            <ul class="skills">
+                                <li>Experience with industry standard GIS software &amp; tools for utility network maintenance</li>
+                                <li>Proficiency with ESRI Enterprise, CAD, SQL, Python scripting, Server deployment and maintainment</li>
+                                <li>Web mapping development with JavaScript, HTML, and the Esri ArcGIS Maps SDK for JavaScript</li>
+                                <li>Ability to analyze and maintain GIS utility networks</li>
+                                <li>Microsoft Teams, Sharepoint, Office experience</li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    <section class="card" aria-labelledby="educationTitle">
+                        <div class="card-head">
+                            <h2 id="educationTitle">Education</h2>
+                        </div>
+                        <div class="card-body">
+                            <ul class="degrees">
+                                <li>
+                                    <span class="in-progress">In progress</span>
+                                    <p class="degree">Master's Degree in Data Analytics</p>
+                                    <p class="school">Currently attending Austin Peay State University</p>
+                                </li>
+                                <li>
+                                    <p class="degree">Bachelor of Science in Geographic Information Systems (GIS)</p>
+                                    <p class="school">Austin Peay State University</p>
+                                </li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    <section class="card" aria-labelledby="contactTitle">
+                        <div class="card-head">
+                            <h2 id="contactTitle">Contact</h2>
+                        </div>
+                        <div class="card-body">
+                            <p class="degree"><a href="mailto:codyparham94@gmail.com">codyparham94@gmail.com</a></p>
+                        </div>
+                    </section>
+                </div>
+            </div>
         </div>
-    </div>
+
+        <section class="section" id="projects" aria-labelledby="projectsTitle">
+            <div class="section-head">
+                <p class="eyebrow">Projects</p>
+                <h2 id="projectsTitle">Mapping projects</h2>
+                <p>Interactive web maps built with the ArcGIS Maps SDK for JavaScript, PostGIS and Supabase. Each one is live below.</p>
+            </div>
+            <div class="projects" id="projectList"></div>
+        </section>
+
+        <footer class="site-footer">© Cody Parham · <a href="mailto:codyparham94@gmail.com">codyparham94@gmail.com</a></footer>
+    </main>
 
     <script src="assets/site.js"></script>
     <script>
-        Site.renderSidebar(document.getElementById("sidebar"), { page: "about" });
+        const navLinks = document.getElementById("navLinks");
+        Site.renderNav(navLinks);
+        Site.renderProjects(document.getElementById("projectList"));
+        Site.trackSections(navLinks);
+
+        // Project sections render after load, so jump to a project link's target ourselves.
+        const target = location.hash && document.getElementById(location.hash.slice(1));
+        if (target) {
+            target.scrollIntoView({ behavior: "instant" });
+        }
     </script>
 </body>
 </html>
